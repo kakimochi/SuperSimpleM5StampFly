@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <FastLED.h>
+#include <M5GFX.h>
 
 // LED
 #define NUM_LEDS_JOYSTICK 2
@@ -14,6 +15,9 @@ CRGB leds_joystick[NUM_LEDS_JOYSTICK];
 #define TONE_C6 (TONE_C5 * 2)
 #define TONE_E6 (TONE_E5 * 2)
 #define TONE_G6 (TONE_G5 * 2)
+
+// GUI
+M5GFX gfx;
 
 void beep()
 {
@@ -36,6 +40,13 @@ void setup()
 
     pinMode(PIN_BUZZER, OUTPUT);
 
+    gfx.begin();
+    gfx.fillScreen(TFT_BLACK);
+    gfx.setTextSize(2);
+    gfx.setTextColor(TFT_GOLD);
+    gfx.setCursor(0, gfx.height() / 2);
+    gfx.println("JoyStick!");
+
     beep_init_done();
     USBSerial.println("[info] init done.");
 }
@@ -43,7 +54,6 @@ void setup()
 void loop()
 {
     USBSerial.println("[info] Hello JoyStick!");
-    beep();
 
     auto colors = {
         CRGB::Red, CRGB::Green, CRGB::Blue, CRGB::Yellow, CRGB::Purple,
