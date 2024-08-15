@@ -1,5 +1,12 @@
+#include <Wire.h>   // I2C
 #include <M5Unified.h>
 #include <FastLED.h>
+
+// I2C
+#define I2C_ADDR_ATOM_JOYSTICK 0x59
+#define I2C_BUTTON_REG 0x70
+#define I2C_SDA_PIN 38
+#define I2C_SCL_PIN 39
 
 // LED
 std::vector<CRGB> colors = {
@@ -50,7 +57,7 @@ void led_color_update()
     leds_joystick[0] = color;
     leds_joystick[1] = color;
     FastLED.show();
-    USBSerial.printf("[info] color_code : 0x%06x\n", color);
+    // USBSerial.printf("[info] color_code : 0x%06x\n", color);
 
     if (color_index >= colors.size())
     {
@@ -64,6 +71,7 @@ void setup()
 {
     auto cfg = M5.config();
     M5.begin(cfg);
+    Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
     USBSerial.begin(115200);
 
     // buzzer
@@ -107,10 +115,26 @@ void loop()
         toggle_switch = !toggle_switch;
     }
 
+    // I2CでJoyStickのボタン状態を取得する
+    Wire.beginTransmission(I2C_ADDR_ATOM_JOYSTICK);
+    Wire.write(I2C_BUTTON_REG);
+    Wire.endTransmission(false);
+
+    const int req_bytes = 4;
+    uint8_t data[req_bytes] = {0};
+    Wire.requestFrom(I2C_ADDR_ATOM_JOYSTICK, req_bytes);
+    while(Wire.available()) {
+        for(int i = 0; i < req_bytes; i++) {
+            data[i] = Wire.read();
+        }
+    }
+
     // Application timer
     current_ms = millis();
     if((current_ms - pre_ms) >= interval_300ms) {
         led_color_update();
+        USBSerial.printf("[info] button_state : %1x%1x%1x%1x\n", data[0],data[1],data[2],data[3]);
+
         pre_ms = current_ms;
     }
 
