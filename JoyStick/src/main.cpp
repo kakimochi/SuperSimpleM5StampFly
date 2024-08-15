@@ -69,6 +69,7 @@ void setup()
     // buzzer
     auto spk_cfg = M5.Speaker.config();
     spk_cfg.pin_data_out = PIN_BUZZER;
+    spk_cfg.magnification = UINT8_MAX;
     M5.Speaker.config(spk_cfg);
 
     // LED
