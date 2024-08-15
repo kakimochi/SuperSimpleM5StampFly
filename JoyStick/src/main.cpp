@@ -16,6 +16,9 @@ CRGB leds_joystick[NUM_LEDS_JOYSTICK];
 #define TONE_E6 (TONE_E5 * 2)
 #define TONE_G6 (TONE_G5 * 2)
 
+// Button
+#define PIN_DISPLAY_BUTTON 41 // G41 on the M5AtomS3 Joystick
+
 // GUI
 M5GFX gfx;
 
@@ -35,11 +38,15 @@ void setup()
 {
     USBSerial.begin(115200);
 
+    // hardware config
+    pinMode(PIN_BUZZER, OUTPUT);
+    pinMode(PIN_DISPLAY_BUTTON, INPUT);
+
+    // LED
     FastLED.addLeds<WS2812, PIN_LED_JOYSTICK, GRB>(leds_joystick, NUM_LEDS_JOYSTICK);
     FastLED.setBrightness(50);
 
-    pinMode(PIN_BUZZER, OUTPUT);
-
+    // GUI
     gfx.begin();
     gfx.fillScreen(TFT_BLACK);
     gfx.setTextSize(2);
@@ -53,6 +60,8 @@ void setup()
 
 void loop()
 {
+    bool button = digitalRead(PIN_DISPLAY_BUTTON);
+
     USBSerial.println("[info] Hello JoyStick!");
 
     auto colors = {
@@ -69,6 +78,13 @@ void loop()
         leds_joystick[0] = color;
         leds_joystick[1] = color;
         FastLED.show();
+
+        if(button == HIGH) {
+            gfx.fillScreen(TFT_BLACK);
+        } else {
+            // 画面ボタン押されてたら
+            gfx.fillScreen(TFT_GOLD);
+        }
 
         USBSerial.printf("[info] color_code : 0x%06x\n", color);
         delay(300);
