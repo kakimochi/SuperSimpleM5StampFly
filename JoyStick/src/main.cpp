@@ -3,6 +3,7 @@
 #include <driver_led.h>
 #include <driver_i2c.h>
 #include <driver_buzzer.h>
+#include <driver_joystick.h>
 
 // Application timer
 const unsigned long interval_300ms = 300;
@@ -17,15 +18,16 @@ void setup()
     USBSerial.begin(115200);
     BUZZER::init();
     LED::init();
+    JOY::init();
 
     // GUI
     M5.Display.begin();
     M5.Display.startWrite();
-        M5.Display.fillScreen(BLACK);
-        M5.Display.setFont(&fonts::efontCN_10);
-        M5.Display.setTextColor(GOLD);
-        M5.Display.setTextSize(2);
-        M5.Display.drawString("JoyStick!", 0, M5.Display.height() / 2);
+    M5.Display.fillScreen(BLACK);
+    M5.Display.setFont(&fonts::efontCN_10);
+    M5.Display.setTextColor(GOLD);
+    M5.Display.setTextSize(2);
+    M5.Display.drawString("JoyStick!", 0, M5.Display.height() / 2);
     M5.Display.endWrite();
 
     // Application timer
@@ -37,28 +39,29 @@ void setup()
 void loop()
 {
     M5.update();
+    JOY::update();
 
-    if(M5.BtnA.wasReleased()) {
+    if (M5.BtnA.wasReleased())
+    {
         static bool toggle_switch;
-        if(toggle_switch) {
+        if (toggle_switch)
+        {
             M5.Display.fillScreen(BLACK);
-        } else {
+        }
+        else
+        {
             M5.Display.fillScreen(GOLD);
         }
         toggle_switch = !toggle_switch;
     }
 
-    // I2CでJoyStickのボタン状態を取得する
-    const int num_btns = 4;
-    uint8_t btn[num_btns] = {0};
-    I2C::read(I2C_ADDR_ATOM_JOYSTICK, I2C_BUTTON_REG, btn, num_btns);
-
     // Application timer
     current_ms = millis();
-    if((current_ms - pre_ms) >= interval_300ms) {
+    if ((current_ms - pre_ms) >= interval_300ms)
+    {
         LED::color_rotation();
         LED::update();
-        USBSerial.printf("[info] button_state : %1x%1x%1x%1x\n", btn[0],btn[1],btn[2],btn[3]);
+        USBSerial.printf("[info] button_state : %1x%1x%1x%1x\n", JOY::isPressed(JOY::BTN_TRG_L), JOY::isPressed(JOY::BTN_TRG_R), JOY::isPressed(JOY::BTN_STICK_L), JOY::isPressed(JOY::BTN_STICK_R));
 
         pre_ms = current_ms;
     }

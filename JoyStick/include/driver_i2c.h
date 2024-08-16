@@ -1,11 +1,9 @@
-#pragma
+#pragma once
 
 #include <Wire.h>
 
-#define I2C_ADDR_ATOM_JOYSTICK 0x59
 #define I2C_SDA_PIN 38  // G38 on the AtomS3
 #define I2C_SCL_PIN 39  // G39 on the AtomS3
-#define I2C_BUTTON_REG 0x70
 
 namespace I2C
 {
