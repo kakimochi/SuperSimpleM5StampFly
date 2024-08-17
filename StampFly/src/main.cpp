@@ -1,45 +1,74 @@
-#include <Arduino.h>
-#include <FastLED.h>
+#include <M5Unified.h>
 
-#define NUM_LEDS_STAMPS3 1
-#define NUM_LEDS_STAMPFLY 2
-#define PIN_LED_STAMPS3 21  // G21 on the M5StampS3
-#define PIN_LED_STAMPFLY 39 // G39 on the M5StampFly
-CRGB leds_stamp3[NUM_LEDS_STAMPS3];
-CRGB leds_stampfly[NUM_LEDS_STAMPFLY];
+#include <driver_led.h>
+#include <driver_motor.h>
+
+// Application timer
+const unsigned long interval_300ms = 300;
+const unsigned long interval_1s = 3000;
+const unsigned long interval_3s = 3000;
+const unsigned long interval_5s = 5000;
+unsigned long pre_ms_300ms = 0;
+unsigned long pre_ms_1s = 0;
+unsigned long pre_ms_3s = 0;
+unsigned long pre_ms_5s = 0;
+unsigned long current_ms = 0;
 
 void setup()
 {
+    auto cfg = M5.config();
+    M5.begin(cfg);
     USBSerial.begin(115200);
+    delay(100);
+    LED::init();
+    MOTOR::init();
 
-    FastLED.addLeds<WS2812, PIN_LED_STAMPS3, GRB>(leds_stamp3, NUM_LEDS_STAMPS3);
-    FastLED.addLeds<WS2812, PIN_LED_STAMPFLY, GRB>(leds_stampfly, NUM_LEDS_STAMPFLY);
-
+    // Application timer
+    pre_ms_300ms = millis();
+    pre_ms_1s = millis();
+    pre_ms_3s = millis();
+    pre_ms_5s = millis();
     USBSerial.println("[info] init done.");
 }
 
 void loop()
 {
-    USBSerial.println("[info] Hello World!");
+    M5.update();
+    MOTOR::update();
 
-    auto colors = {
-        CRGB::Red, CRGB::Green, CRGB::Blue, CRGB::Yellow, CRGB::Purple,
-        CRGB::Cyan, CRGB::White, CRGB::Orange, CRGB::Magenta, CRGB::Lime,
-        CRGB::Pink, CRGB::Teal, CRGB::Gold, CRGB::Indigo, CRGB::Silver,
-        CRGB::Black, CRGB::Gray, CRGB::Brown, CRGB::Maroon, CRGB::Navy,
-        CRGB::Olive, CRGB::SkyBlue, CRGB::SlateGray, CRGB::DarkGreen,
-        CRGB::DarkOrange, CRGB::DarkViolet, CRGB::DarkRed, CRGB::DarkBlue,
-        CRGB::DarkCyan, CRGB::DarkMagenta
-    };
-
-    for (auto color : colors)
+    // Application timer
+    current_ms = millis();
+    if ((current_ms - pre_ms_300ms) >= interval_300ms)
     {
-        leds_stamp3[0] = color;
-        leds_stampfly[0] = color;
-        leds_stampfly[1] = color;
-        FastLED.show();
-
-        USBSerial.printf("[info] color_code : 0x%06x\n", color);
-        delay(300);
+        LED::color_rotation();
+        LED::update();
+        pre_ms_300ms = current_ms;
     }
+    if ((current_ms - pre_ms_1s) >= interval_1s)
+    {
+        static int run_once_1s = 0;
+        if(run_once_1s == 0) {
+            MOTOR::setSpeed(MOTOR::MTR_FL, 0.1);
+            MOTOR::setSpeed(MOTOR::MTR_FR, 0.1);
+            MOTOR::setSpeed(MOTOR::MTR_BL, 0.1);
+            MOTOR::setSpeed(MOTOR::MTR_BR, 0.1);
+            run_once_1s = 1;
+        }
+        pre_ms_1s = current_ms;
+    }
+    if ((current_ms - pre_ms_3s) >= interval_3s)
+    {
+        pre_ms_3s = current_ms;
+    }
+    if ((current_ms - pre_ms_5s) >= interval_5s)
+    {
+        static int run_once_5s = 0;
+        if(run_once_5s == 0) {
+            MOTOR::stop();
+            run_once_5s = 1;
+        }
+        pre_ms_5s = current_ms;
+    }
+
+    vTaskDelay(10);
 }
