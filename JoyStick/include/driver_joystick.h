@@ -1,5 +1,6 @@
 #pragma once
 
+#include <typedef.h>
 #include <driver_i2c.h>
 
 #define I2C_ADDR_ATOM_JOYSTICK 0x59
@@ -9,48 +10,6 @@
 
 namespace JOY
 {
-
-    enum
-    {
-        STICK_L,
-        STICK_R,
-        NUM_STICK_MAX
-    };
-
-    enum
-    {
-        BTN_TRG_L,
-        BTN_TRG_R,
-        BTN_STICK_L,
-        BTN_STICK_R,
-        NUM_BTN_MAX
-    };
-
-    typedef struct
-    {
-        struct
-        {
-            uint16_t x; // 12bit
-            uint16_t y;
-        } stick_l_raw;
-        struct
-        {
-            uint16_t x; // 12bit
-            uint16_t y;
-        } stick_r_raw;
-        struct
-        {
-            float_t x;
-            float_t y;
-        } stick_l;
-        struct
-        {
-            float_t x;
-            float_t y;
-        } stick_r;
-
-        uint8_t btn[NUM_BTN_MAX];
-    } JoyData_t;
 
     JoyData_t joy_data;
 
@@ -65,37 +24,49 @@ namespace JOY
         I2C::read(I2C_ADDR_ATOM_JOYSTICK, I2C_REG_JOY2_ADC_VALUE_12BITS, (uint8_t *)&joy_data.stick_r_raw, sizeof(joy_data.stick_r_raw));
         I2C::read(I2C_ADDR_ATOM_JOYSTICK, I2C_BTN_REG, joy_data.btn, sizeof(joy_data.btn));
 
-        // normalize
-        joy_data.stick_l.x = (float)(joy_data.stick_l_raw.x - 2048) / 2048.0;
-        joy_data.stick_l.y = (float)(joy_data.stick_l_raw.y - 2048) / 2048.0;
-        joy_data.stick_r.x = (float)(joy_data.stick_r_raw.x - 2048) / 2048.0;
-        joy_data.stick_r.y = (float)(joy_data.stick_r_raw.y - 2048) / 2048.0;
+        // // normalize
+        // joy_data.stick_l.x = (float)(joy_data.stick_l_raw.x - 2048) / 2048.0;
+        // joy_data.stick_l.y = (float)(joy_data.stick_l_raw.y - 2048) / 2048.0;
+        // joy_data.stick_r.x = (float)(joy_data.stick_r_raw.x - 2048) / 2048.0;
+        // joy_data.stick_r.y = (float)(joy_data.stick_r_raw.y - 2048) / 2048.0;
 
-        // correct axis
-        joy_data.stick_l.y *= -1.0;
-        joy_data.stick_r.y *= -1.0;
+        // // correct axis
+        // joy_data.stick_l.y *= -1.0;
+        // joy_data.stick_r.y *= -1.0;
     }
 
-    void getAxis(uint8_t index, uint16_t *x, uint16_t *y, bool normalized = false)
+    void getAxis(uint8_t index, uint16_t *x, uint16_t *y)
+    // void getAxis(uint8_t index, uint16_t *x, uint16_t *y, bool normalized = false)
     {
         if (index == STICK_L)
         {
-            if(normalized) {
-                *x = joy_data.stick_l.x;
-                *y = joy_data.stick_l.y;
-            } else {
-                *x = joy_data.stick_l_raw.x;
-                *y = joy_data.stick_l_raw.y;
-            }
+            *x = joy_data.stick_l_raw.x;
+            *y = joy_data.stick_l_raw.y;
+            // if(normalized) {
+            //     *x = joy_data.stick_l.x;
+            //     *y = joy_data.stick_l.y;
+            // } else {
+            //     *x = joy_data.stick_l_raw.x;
+            //     *y = joy_data.stick_l_raw.y;
+            // }
         } else if (index == STICK_R) {
-            if(normalized) {
-                *x = joy_data.stick_r.x;
-                *y = joy_data.stick_r.y;
-            } else {
-                *x = joy_data.stick_r_raw.x;
-                *y = joy_data.stick_r_raw.y;
-            }
+            *x = joy_data.stick_r_raw.x;
+            *y = joy_data.stick_r_raw.y;
+            // if(normalized) {
+            //     *x = joy_data.stick_r.x;
+            //     *y = joy_data.stick_r.y;
+            // } else {
+            //     *x = joy_data.stick_r_raw.x;
+            //     *y = joy_data.stick_r_raw.y;
+            // }
         }
+    }
+
+    void normalize(uint16_t x, uint16_t y, float *nx, float *ny)
+    {
+        const int BIT12_MAX = (1 << 12);
+        *nx = (float)((x - BIT12_MAX / 2) / BIT12_MAX);
+        *ny = (float)((y - BIT12_MAX / 2) / BIT12_MAX);
     }
 
     bool isPressed(uint8_t index)

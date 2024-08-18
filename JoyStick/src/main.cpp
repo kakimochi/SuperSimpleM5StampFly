@@ -4,11 +4,15 @@
 #include <driver_i2c.h>
 #include <driver_buzzer.h>
 #include <driver_joystick.h>
+#include <driver_ble.h>
 
 // Application timer
+unsigned long current_ms = 0;
 const unsigned long interval_300ms = 300;
 unsigned long pre_ms = 0;
-unsigned long current_ms = 0;
+const unsigned long interval_3sec = 3000;
+unsigned long pre_ms_3sec = 0;
+
 
 void setup()
 {
@@ -19,6 +23,7 @@ void setup()
     BUZZER::init();
     LED::init();
     JOY::init();
+    BLE::init();
 
     // GUI
     M5.Display.begin();
@@ -30,6 +35,13 @@ void setup()
     M5.Display.drawString("JoyCon!", M5.Display.width()-100, 0);
     M5.Display.endWrite();
 
+    // BLE
+    BLE::connect();
+    do {
+        USBSerial.println("[info] BLE connecting...");
+        delay(2000);
+    } while(!BLE::isConnected());
+
     // Application timer
     pre_ms = millis();
     BUZZER::beep_init_done();
@@ -40,6 +52,7 @@ void loop()
 {
     M5.update();
     JOY::update();
+    BLE::send(JOY::joy_data);
 
     if (M5.BtnA.wasReleased())
     {
@@ -64,9 +77,12 @@ void loop()
     {
         LED::color_rotation();
         LED::update();
-        // USBSerial.printf("[info] button_state : %1x%1x%1x%1x\n", JOY::isPressed(JOY::BTN_TRG_L), JOY::isPressed(JOY::BTN_TRG_R), JOY::isPressed(JOY::BTN_STICK_L), JOY::isPressed(JOY::BTN_STICK_R));
-        USBSerial.printf("[info] stick_l: %.3f, %.3f, stick_r: %.3f, %.3f\n", JOY::joy_data.stick_l.x, JOY::joy_data.stick_l.y, JOY::joy_data.stick_r.x, JOY::joy_data.stick_r.y);
         pre_ms = current_ms;
+    }
+    if ((current_ms - pre_ms_3sec) >= interval_3sec)
+    {
+        USBSerial.printf("[info] stick_l_raw: %5d, %5d, stick_r_raw: %5d, %5d, button: %1x%1x%1x%1x\n", JOY::joy_data.stick_l_raw.x, JOY::joy_data.stick_l_raw.y, JOY::joy_data.stick_r_raw.x, JOY::joy_data.stick_r_raw.y, JOY::isPressed(JOY::BTN_TRG_L), JOY::isPressed(JOY::BTN_TRG_R), JOY::isPressed(JOY::BTN_STICK_L), JOY::isPressed(JOY::BTN_STICK_R));
+        pre_ms_3sec = current_ms;
     }
 
     vTaskDelay(10);

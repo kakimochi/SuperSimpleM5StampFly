@@ -44,13 +44,13 @@ namespace MOTOR {
         USBSerial.println("[info] motor init done.");
     }
 
-    void setSpeed(int index, float pwm_duty_ratio)
+    void setSpeed(int index, float_t pwm_duty_ratio)
     {
         if(index >= NUM_MOTORS) {
             return;
         }
         pwm_duty[index] = uint32_t(pwm_duty_ratio * MTR_PWM_MAX);
-        USBSerial.printf("[info] setSpeed: motor[%d] pwm_duty : %d\n", index, pwm_duty[index]);
+        // USBSerial.printf("[info] setSpeed: motor[%d] pwm_duty : %d\n", index, pwm_duty[index]);
     }
 
     void update()
@@ -59,7 +59,7 @@ namespace MOTOR {
         ledcWrite(MTR_FR, pwm_duty[MTR_FR]);
         ledcWrite(MTR_BL, pwm_duty[MTR_BL]);
         ledcWrite(MTR_BR, pwm_duty[MTR_BR]);
-        USBSerial.printf("[info] motor pwm updated. (%d,%d,%d,%d)\n",pwm_duty[MTR_FL], pwm_duty[MTR_FR], pwm_duty[MTR_BL], pwm_duty[MTR_BR]);
+        // USBSerial.printf("[info] motor pwm updated. (%d,%d,%d,%d)\n",pwm_duty[MTR_FL], pwm_duty[MTR_FR], pwm_duty[MTR_BL], pwm_duty[MTR_BR]);
     }
 
     void stop()

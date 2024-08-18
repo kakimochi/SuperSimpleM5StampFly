@@ -1,18 +1,40 @@
 #include <M5Unified.h>
 
+#include <typedef.h>
 #include <driver_led.h>
 #include <driver_motor.h>
+#include <driver_ble.h>
 
 // Application timer
-const unsigned long interval_300ms = 300;
-const unsigned long interval_1s = 3000;
-const unsigned long interval_3s = 3000;
-const unsigned long interval_5s = 5000;
-unsigned long pre_ms_300ms = 0;
-unsigned long pre_ms_1s = 0;
-unsigned long pre_ms_3s = 0;
-unsigned long pre_ms_5s = 0;
 unsigned long current_ms = 0;
+const unsigned long interval_300ms = 300;
+unsigned long pre_ms_300ms = 0;
+const unsigned long interval_3sec = 3000;
+unsigned long pre_ms_3sec = 0;
+
+// BLE Peripheral
+static bool ble_connected = false;
+static JOY::JoyData_t joydata = {0};
+
+static void ble_event_callback(BLE::BLEEventParam_t *param)
+{
+    switch (param->event)
+    {
+    case BLE::BLE_EVENT_CONNECTED:
+        ble_connected = true;
+        USBSerial.println("[info] BLE_EVENT_CONNECTED");
+        break;
+    case BLE::BLE_EVENT_DISCONNECTED:
+        ble_connected = false;
+        USBSerial.println("[info] BLE_EVENT_DISCONNECTED");
+        break;
+    case BLE::BLE_EVENT_RECEIVED:
+        joydata = param->joydata;
+        break;
+    default:
+        break;
+    }
+}
 
 void setup()
 {
@@ -22,12 +44,10 @@ void setup()
     delay(100);
     LED::init();
     MOTOR::init();
+    BLE::init(ble_event_callback);
 
     // Application timer
     pre_ms_300ms = millis();
-    pre_ms_1s = millis();
-    pre_ms_3s = millis();
-    pre_ms_5s = millis();
     USBSerial.println("[info] init done.");
 }
 
@@ -35,6 +55,22 @@ void loop()
 {
     M5.update();
     MOTOR::update();
+    BLE::update();
+
+    float_t pow = ((int16_t)joydata.stick_l_raw.y - 4096/2) / 4096.0f * 2.0f;   // -1.0 - 1.0
+    pow *= -1.0f;   // レバー前に倒すと回転数アップ
+    if(ble_connected) {
+        if((pow > 0.1f) && (pow < 1.0f)) {
+            MOTOR::setSpeed(MOTOR::MTR_FL, pow * 0.1f);
+            MOTOR::setSpeed(MOTOR::MTR_FR, pow * 0.1f);
+            MOTOR::setSpeed(MOTOR::MTR_BL, pow * 0.1f);
+            MOTOR::setSpeed(MOTOR::MTR_BR, pow * 0.1f);
+        } else {
+            MOTOR::stop();
+        }
+    } else {
+            MOTOR::stop();
+    }
 
     // Application timer
     current_ms = millis();
@@ -44,30 +80,13 @@ void loop()
         LED::update();
         pre_ms_300ms = current_ms;
     }
-    if ((current_ms - pre_ms_1s) >= interval_1s)
+    if ((current_ms - pre_ms_3sec) >= interval_3sec)
     {
-        static int run_once_1s = 0;
-        if(run_once_1s == 0) {
-            MOTOR::setSpeed(MOTOR::MTR_FL, 0.1);
-            MOTOR::setSpeed(MOTOR::MTR_FR, 0.1);
-            MOTOR::setSpeed(MOTOR::MTR_BL, 0.1);
-            MOTOR::setSpeed(MOTOR::MTR_BR, 0.1);
-            run_once_1s = 1;
+        if(ble_connected) {
+            USBSerial.printf("pow: %f\n", pow);
+            USBSerial.printf("[info] stick_l_raw: %5d, %5d, stick_r_raw: %5d, %5d\n", joydata.stick_l_raw.x, joydata.stick_l_raw.y, joydata.stick_r_raw.x, joydata.stick_r_raw.y);
         }
-        pre_ms_1s = current_ms;
-    }
-    if ((current_ms - pre_ms_3s) >= interval_3s)
-    {
-        pre_ms_3s = current_ms;
-    }
-    if ((current_ms - pre_ms_5s) >= interval_5s)
-    {
-        static int run_once_5s = 0;
-        if(run_once_5s == 0) {
-            MOTOR::stop();
-            run_once_5s = 1;
-        }
-        pre_ms_5s = current_ms;
+        pre_ms_3sec = current_ms;
     }
 
     vTaskDelay(10);
