@@ -4,6 +4,7 @@
 #include <driver_led.h>
 #include <driver_motor.h>
 #include <driver_ble.h>
+#include <driver_imu.h>
 
 // Application timer
 unsigned long current_ms = 0;
@@ -45,6 +46,7 @@ void setup()
     LED::init();
     MOTOR::init();
     BLE::init(ble_event_callback);
+    IMU::init();
 
     // Application timer
     pre_ms_300ms = millis();
@@ -56,6 +58,7 @@ void loop()
     M5.update();
     MOTOR::update();
     BLE::update();
+    IMU::update();
 
     float_t pow = ((int16_t)joydata.stick_l_raw.y - 4096/2) / 4096.0f * 2.0f;   // -1.0 - 1.0
     pow *= -1.0f;   // レバー前に倒すと回転数アップ
@@ -86,6 +89,7 @@ void loop()
             USBSerial.printf("pow: %f\n", pow);
             USBSerial.printf("[info] stick_l_raw: %5d, %5d, stick_r_raw: %5d, %5d\n", joydata.stick_l_raw.x, joydata.stick_l_raw.y, joydata.stick_r_raw.x, joydata.stick_r_raw.y);
         }
+        USBSerial.printf("[info] acc: %6.3f, %6.3f, %6.3f, gyr: %6.3f, %6.3f, %6.3f\n", IMU::imu.data.accelX, IMU::imu.data.accelY, IMU::imu.data.accelZ, IMU::imu.data.gyroX, IMU::imu.data.gyroY, IMU::imu.data.gyroZ);
         pre_ms_3sec = current_ms;
     }
 
