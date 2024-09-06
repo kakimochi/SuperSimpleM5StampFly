@@ -89,11 +89,14 @@ void loop()
             USBSerial.printf("pow: %f\n", pow);
             USBSerial.printf("[info] stick_l_raw: %5d, %5d, stick_r_raw: %5d, %5d\n", joydata.stick_l_raw.x, joydata.stick_l_raw.y, joydata.stick_r_raw.x, joydata.stick_r_raw.y);
         }
-        // USBSerial.printf("[info] acc: %6.3f, %6.3f, %6.3f, gyr: %6.3f, %6.3f, %6.3f\n", IMU::imu.data.accelX, IMU::imu.data.accelY, IMU::imu.data.accelZ, IMU::imu.data.gyroX, IMU::imu.data.gyroY, IMU::imu.data.gyroZ);
-        USBSerial.printf("[info] posture: roll: %6.3f, pitch: %6.3f, yaw: %6.3f\n", IMU::posture.roll, IMU::posture.pitch, IMU::posture.yaw);
-        // USBSerial.printf(">roll: %6.3f\n", IMU::posture.roll);
-        // USBSerial.printf(">pitch: %6.3f\n", IMU::posture.pitch);
-        // USBSerial.printf(">yaw: %6.3f\n", IMU::posture.yaw);
+        // USBSerial.printf("[info] posture: roll: %6.3f, pitch: %6.3f, yaw: %6.3f\n", IMU::posture.roll, IMU::posture.pitch, IMU::posture.yaw);
+        // USBSerial.printf("[info] acc: %6.3f, %6.3f, %6.3f, gyr: %6.3f, %6.3f, %6.3f, mag: %4d, %4d, %4d, deg:%6.3f\n", IMU::imu.data.accelX, IMU::imu.data.accelY, IMU::imu.data.accelZ, IMU::imu.data.gyroX, IMU::imu.data.gyroY, IMU::imu.data.gyroZ, IMU::compass_data.x, IMU::compass_data.y, IMU::compass_data.z, IMU::compass_degree);
+
+        // for teleplot
+        USBSerial.printf(">roll: %6.3f\n", IMU::posture.roll);
+        USBSerial.printf(">pitch: %6.3f\n", IMU::posture.pitch);
+        USBSerial.printf(">yaw: %6.3f\n", IMU::posture.yaw);
+
         pre_ms_3sec = current_ms;
     }
 
