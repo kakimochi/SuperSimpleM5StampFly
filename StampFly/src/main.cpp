@@ -13,30 +13,6 @@ unsigned long pre_ms_300ms = 0;
 const unsigned long interval_3sec = 3000;
 unsigned long pre_ms_3sec = 0;
 
-// BLE Peripheral
-static bool ble_connected = false;
-static JOY::JoyData_t joydata = {0};
-
-static void ble_event_callback(BLE::BLEEventParam_t *param)
-{
-    switch (param->event)
-    {
-    case BLE::BLE_EVENT_CONNECTED:
-        ble_connected = true;
-        USBSerial.println("[info] BLE_EVENT_CONNECTED");
-        break;
-    case BLE::BLE_EVENT_DISCONNECTED:
-        ble_connected = false;
-        USBSerial.println("[info] BLE_EVENT_DISCONNECTED");
-        break;
-    case BLE::BLE_EVENT_RECEIVED:
-        joydata = param->joydata;
-        break;
-    default:
-        break;
-    }
-}
-
 void setup()
 {
     auto cfg = M5.config();
@@ -45,7 +21,7 @@ void setup()
     delay(100);
     LED::init();
     MOTOR::init();
-    BLE::init(ble_event_callback);
+    BLE::init(BLE::ble_event_callback);
     IMU::init();
 
     // Application timer
@@ -60,9 +36,10 @@ void loop()
     BLE::update();
     IMU::update();
 
+    JOY::JoyData_t joydata = BLE::getJoyData();
     float_t pow = ((int16_t)joydata.stick_l_raw.y - 4096/2) / 4096.0f * 2.0f;   // -1.0 - 1.0
     pow *= -1.0f;   // レバー前に倒すと回転数アップ
-    if(ble_connected) {
+    if(BLE::isConnected()) {
         if((pow > 0.1f) && (pow < 1.0f)) {
             MOTOR::setSpeed(MOTOR::MTR_FL, pow * 0.1f);
             MOTOR::setSpeed(MOTOR::MTR_FR, pow * 0.1f);
@@ -85,7 +62,7 @@ void loop()
     }
     if ((current_ms - pre_ms_3sec) >= interval_3sec)
     {
-        if(ble_connected) {
+        if(BLE::isConnected()) {
             USBSerial.printf("pow: %f\n", pow);
             USBSerial.printf("[info] stick_l_raw: %5d, %5d, stick_r_raw: %5d, %5d\n", joydata.stick_l_raw.x, joydata.stick_l_raw.y, joydata.stick_r_raw.x, joydata.stick_r_raw.y);
         }

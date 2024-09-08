@@ -36,6 +36,9 @@ namespace BLE
     bool deviceConnected = false;
     bool advertising = false;
 
+    static bool ble_connected = false;
+    static JOY::JoyData_t joydata = {0};
+
     class BLECallbacks : public BLEServerCallbacks, public BLECharacteristicCallbacks
     {
         void onConnect(BLEServer *pServer) override
@@ -66,11 +69,6 @@ namespace BLE
         void onWrite(BLECharacteristic *pCharacteristic) override
         {
             std::string value = pCharacteristic->getValue();
-            // USBSerial.printf("value size: %d\n", value.length());
-            // for(size_t i = 0; i < value.length(); i++) {
-            //     USBSerial.printf("%02x ", value[i]);
-            // }
-            // USBSerial.printf("\n");
             if (value.length() == sizeof(JOY::JoyData_t))
             {
                 JOY::JoyData_t joydata;
@@ -82,7 +80,6 @@ namespace BLE
                     param.joydata = joydata;
                     _ble_callback(&param);
                 }
-                // USBSerial.printf("[info] stick_l_raw: %5d, %5d, stick_r_raw: %5d, %5d\n", joydata.stick_l_raw.x, joydata.stick_l_raw.y, joydata.stick_r_raw.x, joydata.stick_r_raw.y);
             } else {
                 USBSerial.printf("[error] BLE packet size unmatched, value:length()=%d, sizeof(JOY::JoyData_t)=%d\n",value.length(), sizeof(JOY::JoyData_t));
             }
@@ -92,7 +89,25 @@ namespace BLE
 
     BLECallbacks bleCallbacks;
 
-
+    static void ble_event_callback(BLE::BLEEventParam_t *param)
+    {
+        switch (param->event)
+        {
+        case BLE::BLE_EVENT_CONNECTED:
+            ble_connected = true;
+            USBSerial.println("[info] BLE_EVENT_CONNECTED");
+            break;
+        case BLE::BLE_EVENT_DISCONNECTED:
+            ble_connected = false;
+            USBSerial.println("[info] BLE_EVENT_DISCONNECTED");
+            break;
+        case BLE::BLE_EVENT_RECEIVED:
+            joydata = param->joydata;
+            break;
+        default:
+            break;
+        }
+    }
 
     void init(BLECallback_t callback)
     {
@@ -151,5 +166,8 @@ namespace BLE
             }
         }
     }
+
+    bool isConnected() { return ble_connected; }
+    JOY::JoyData_t getJoyData() { return joydata; }
 
 } // namespace BLE
