@@ -5,6 +5,7 @@
 #include <driver_motor.h>
 #include <driver_ble.h>
 #include <driver_imu.h>
+#include <util.h>
 
 // Application timer
 unsigned long current_ms = 0;
@@ -31,10 +32,16 @@ void setup()
 
 void loop()
 {
+UTIL::tic();
+
     M5.update();
+UTIL::toc("M5_U ");
     MOTOR::update();
+UTIL::toc("MTR_U");
     BLE::update();
+UTIL::toc("BLE_U");
     IMU::update();
+UTIL::toc("IMU_U");
 
     JOY::JoyData_t joydata = BLE::getJoyData();
     float_t pow = ((int16_t)joydata.stick_l_raw.y - 4096/2) / 4096.0f * 2.0f;   // -1.0 - 1.0
@@ -76,6 +83,8 @@ void loop()
 
         pre_ms_3sec = current_ms;
     }
+
+UTIL::toc("END");
 
     vTaskDelay(10);
 }
